@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineVault — Premium Movie Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --card: #13131e;
+    --accent: #e8b04b;
+    --accent2: #ff5f5f;
+    --teal: #2dd4bf;
+    --text: #f0eff5;
+    --muted: #7a798a;
+    --border: #252535;
+    --seat-avail: #2dd4bf;
+    --seat-booked: #3a3a4a;
+    --seat-selected: #e8b04b;
+    --red: #ff5f5f;
+    --green: #4ade80;
+    --radius: 12px;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,15,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 clamp(16px, 4vw, 60px); height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; }
+  .nav-logo span { color: var(--teal); -webkit-text-fill-color: var(--teal); }
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; padding: 6px 14px; border-radius: 6px; transition: var(--transition); cursor: pointer; }
+  .nav-links a:hover { color: var(--text); background: var(--bg3); }
+  .nav-links a.active { color: var(--accent); }
+  .nav-right { display: flex; gap: 10px; align-items: center; }
+  .btn-login { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 7px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: var(--transition); font-family: 'DM Sans', sans-serif; }
+  .btn-login:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-register { background: linear-gradient(135deg, var(--accent), #d4943a); border: none; color: #0a0a0f; padding: 7px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: var(--transition); font-family: 'DM Sans', sans-serif; }
+  .btn-register:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,176,75,0.3); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: var(--transition); }
+
+  /* HERO */
+  .hero { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; padding: 80px clamp(16px, 5vw, 80px) 40px; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 60% 40%, rgba(232,176,75,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 10% 80%, rgba(45,212,191,0.06) 0%, transparent 50%), var(--bg); }
+  .hero-grain { position: absolute; inset: 0; opacity: 0.03; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .hero-content { position: relative; z-index: 2; max-width: 600px; }
+  .hero-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--teal); margin-bottom: 16px; }
+  .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 8vw, 96px); line-height: 0.95; letter-spacing: 2px; margin-bottom: 20px; }
+  .hero-title em { color: var(--accent); font-style: normal; }
+  .hero-sub { font-size: 16px; color: var(--muted); line-height: 1.7; max-width: 480px; margin-bottom: 36px; }
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+  .stats { display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+  .stat strong { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); display: block; }
+  .stat span { font-size: 12px; color: var(--muted); }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); text-decoration: none; font-family: 'DM Sans', sans-serif; border: none; letter-spacing: 0.3px; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #d4943a); color: #0a0a0f; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,176,75,0.35); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--text); }
+  .btn-lg { padding: 14px 36px; font-size: 15px; }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* SEARCH */
+  .search-section { padding: 32px clamp(16px, 5vw, 80px); background: var(--bg2); border-bottom: 1px solid var(--border); }
+  .search-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; max-width: 1400px; margin: 0 auto; }
+  .search-input-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-input-wrap svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .search-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 10px 14px 10px 42px; border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; transition: var(--transition); }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+  .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; cursor: pointer; transition: var(--transition); background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .chip:hover { color: var(--text); border-color: var(--muted); }
+  .chip.active { background: var(--accent); color: #0a0a0f; border-color: var(--accent); }
+
+  /* SECTION */
+  .section { padding: 48px clamp(16px, 5vw, 80px); max-width: 1400px; margin: 0 auto; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .section-title { font-family: 'Oswald', sans-serif; font-size: clamp(24px, 3vw, 36px); font-weight: 600; letter-spacing: 1px; }
+  .section-title span { color: var(--accent); }
+
+  /* MOVIE GRID */
+  .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px; }
+  .movie-card { background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); transition: var(--transition); cursor: pointer; position: relative; }
+  .movie-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.5); border-color: rgba(232,176,75,0.4); }
+  .movie-poster-wrap { width: 100%; aspect-ratio: 2/3; overflow: hidden; position: relative; }
+  .movie-poster { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+  .movie-card:hover .movie-poster { transform: scale(1.06); }
+  .movie-poster-placeholder { width: 100%; height: 100%; background: var(--bg3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 48px; }
+  .movie-badge { position: absolute; top: 10px; right: 10px; background: var(--accent); color: #0a0a0f; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px; z-index: 2; }
+  .movie-badge.new { background: var(--red); color: #fff; }
+  .movie-badge.hot { background: var(--accent); color: #0a0a0f; }
+  .movie-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,10,15,0.97) 0%, rgba(10,10,15,0.3) 50%, transparent 100%); opacity: 0; transition: var(--transition); display: flex; align-items: flex-end; padding: 16px; }
+  .movie-card:hover .movie-card-overlay { opacity: 1; }
+  .movie-info { padding: 14px; }
+  .movie-name { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 500; margin-bottom: 6px; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .movie-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .movie-genre { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--teal); text-transform: uppercase; }
+  .movie-dur { font-size: 10px; color: var(--muted); }
+  .movie-rating { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--accent); font-weight: 700; margin-left: auto; }
+  .movie-card .btn { width: 100%; justify-content: center; padding: 8px 16px; font-size: 12px; }
+
+  /* DETAIL PAGE */
+  .detail-hero { position: relative; min-height: 60vh; display: flex; align-items: flex-end; padding: 100px clamp(16px, 5vw, 80px) 48px; overflow: hidden; }
+  .detail-hero-bg { position: absolute; inset: 0; background: linear-gradient(to right, rgba(10,10,15,0.98) 30%, rgba(10,10,15,0.6) 100%), linear-gradient(to top, var(--bg) 0%, transparent 40%); }
+  .detail-poster-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(4px) brightness(0.35); }
+  .detail-content { position: relative; z-index: 2; display: flex; gap: 48px; align-items: flex-end; max-width: 1200px; width: 100%; }
+  .detail-poster { width: 200px; flex-shrink: 0; border-radius: var(--radius); overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.7); display: none; }
+  @media(min-width:768px) { .detail-poster { display: block; } }
+  .detail-poster img { width: 200px; aspect-ratio: 2/3; object-fit: cover; display: block; }
+  .detail-poster-inner { width: 200px; aspect-ratio: 2/3; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 60px; }
+  .detail-info { flex: 1; }
+  .detail-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 72px); letter-spacing: 2px; line-height: 1; margin-bottom: 12px; }
+  .detail-tags { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tag { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .tag-genre { background: rgba(232,176,75,0.15); color: var(--accent); }
+  .tag-rating { background: rgba(74,222,128,0.15); color: var(--green); }
+  .tag-dur { background: rgba(45,212,191,0.1); color: var(--teal); }
+  .detail-desc { font-size: 15px; color: var(--muted); line-height: 1.8; max-width: 560px; margin-bottom: 24px; }
+  .detail-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .detail-section { padding: 40px clamp(16px, 5vw, 80px); max-width: 1200px; margin: 0 auto; }
+  .detail-section h3 { font-family: 'Oswald', sans-serif; font-size: 20px; color: var(--accent); margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+  .detail-section h3::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .trailer-wrap { border-radius: var(--radius); overflow: hidden; aspect-ratio: 16/9; background: var(--bg3); border: 1px solid var(--border); }
+  .trailer-wrap iframe { width: 100%; height: 100%; border: none; }
+  .cast-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+  .cast-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; min-width: 100px; transition: var(--transition); }
+  .cast-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .cast-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--bg3); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid var(--border); }
+  .cast-name { font-size: 13px; font-weight: 600; }
+  .cast-role { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .showtimes { display: flex; flex-direction: column; gap: 20px; }
+  .showtime-row { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .showtime-date { font-family: 'Oswald', sans-serif; font-size: 16px; color: var(--accent); margin-bottom: 12px; }
+  .showtime-slots { display: flex; gap: 10px; flex-wrap: wrap; }
+  .slot-btn { padding: 8px 20px; border-radius: 8px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'DM Sans', sans-serif; }
+  .slot-btn:hover, .slot-btn.active { background: var(--accent); color: #0a0a0f; border-color: var(--accent); }
+
+  /* SEATS */
+  .seat-page { padding-top: 64px; }
+  .seat-header { padding: 32px clamp(16px, 5vw, 80px); background: var(--bg2); border-bottom: 1px solid var(--border); }
+  .seat-header h2 { font-family: 'Oswald', sans-serif; font-size: 24px; letter-spacing: 1px; }
+  .seat-meta { display: flex; gap: 20px; margin-top: 8px; flex-wrap: wrap; }
+  .seat-meta span { font-size: 13px; color: var(--muted); }
+  .seat-meta span strong { color: var(--accent); }
+  .screen-wrap { text-align: center; padding: 40px clamp(16px, 5vw, 80px) 0; }
+  .screen { max-width: 600px; margin: 0 auto 12px; height: 8px; background: linear-gradient(90deg, transparent, var(--accent), transparent); border-radius: 50%; box-shadow: 0 0 30px rgba(232,176,75,0.4); }
+  .screen-label { font-size: 11px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-bottom: 40px; }
+  .seat-layout { max-width: 700px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 40px) 40px; }
+  .seat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: center; }
+  .row-label { width: 20px; text-align: center; font-size: 11px; color: var(--muted); font-weight: 700; flex-shrink: 0; }
+  .seat { width: 32px; height: 28px; border-radius: 6px 6px 3px 3px; cursor: pointer; transition: var(--transition); position: relative; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+  .seat::before { content: ''; position: absolute; bottom: -3px; left: 3px; right: 3px; height: 3px; background: inherit; border-radius: 0 0 3px 3px; filter: brightness(0.6); }
+  .seat.available { background: var(--seat-avail); color: #0a0a0f; }
+  .seat.available:hover { transform: scale(1.15); box-shadow: 0 0 12px rgba(45,212,191,0.5); }
+  .seat.booked { background: var(--seat-booked); color: var(--muted); cursor: not-allowed; }
+  .seat.selected { background: var(--seat-selected); color: #0a0a0f; box-shadow: 0 0 12px rgba(232,176,75,0.5); }
+  .seat.selected:hover { transform: scale(1.1); }
+  .seat-gap { width: 24px; }
+  .seat-category-label { text-align: center; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+  .seat-legend { display: flex; gap: 20px; justify-content: center; margin: 24px 0; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .legend-swatch { width: 24px; height: 20px; border-radius: 4px 4px 2px 2px; }
+  .legend-swatch.avail { background: var(--seat-avail); }
+  .legend-swatch.booked { background: var(--seat-booked); }
+  .legend-swatch.selected { background: var(--seat-selected); }
+  .seat-footer { position: sticky; bottom: 0; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 16px clamp(16px, 5vw, 80px); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .selected-info { display: flex; flex-direction: column; gap: 4px; }
+  .selected-seats { font-size: 13px; color: var(--muted); }
+  .selected-seats strong { color: var(--teal); }
+  .total-price { font-family: 'Oswald', sans-serif; font-size: 28px; color: var(--accent); }
+  .total-price small { font-size: 13px; color: var(--muted); font-family: 'DM Sans', sans-serif; }
+
+  /* FLOW PAGES */
+  .flow-page { padding: 100px clamp(16px, 5vw, 80px) 60px; max-width: 640px; margin: 0 auto; }
+  .flow-title { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 2px; margin-bottom: 8px; }
+  .flow-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .booking-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+  .booking-card h4 { font-family: 'Oswald', sans-serif; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .booking-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .booking-row:last-child { border: none; padding-bottom: 0; }
+  .booking-label { font-size: 13px; color: var(--muted); }
+  .booking-value { font-size: 14px; font-weight: 600; text-align: right; }
+  .booking-total { font-family: 'Oswald', sans-serif; font-size: 22px; color: var(--accent); }
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 10px; font-size: 15px; font-family: 'DM Sans', sans-serif; transition: var(--transition); }
+  .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,176,75,0.1); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .payment-icons { display: flex; gap: 8px; margin-bottom: 24px; }
+  .pay-icon { width: 42px; height: 28px; border-radius: 4px; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .pay-icon.visa { color: #1a1f71; background: #fff; }
+  .pay-icon.mc { background: linear-gradient(135deg, #eb001b, #f79e1b); }
+  .secure-note { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-top: 12px; }
+  .input-group { position: relative; }
+  .input-group .form-input { padding-left: 48px; }
+  .input-group .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px; }
+  .confirm-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(74,222,128,0.1); border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 24px; }
+  .booking-id { font-family: 'Oswald', sans-serif; font-size: 28px; letter-spacing: 4px; color: var(--accent); text-align: center; margin: 16px 0; }
+  .ticket-card { background: var(--card); border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; position: relative; margin-top: 24px; }
+  .ticket-card::before, .ticket-card::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--bg); }
+  .ticket-card::before { left: -13px; }
+  .ticket-card::after { right: -13px; }
+  .ticket-divider { border: none; border-top: 2px dashed var(--border); margin: 20px 0; }
+  .barcode { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 8px; color: var(--muted); }
+  .ticket-barcode { text-align: center; margin-top: 16px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+  .badge-success { background: rgba(74,222,128,0.15); color: var(--green); }
+
+  /* STEPS */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 36px; }
+  .step { display: flex; align-items: center; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid var(--border); color: var(--muted); background: var(--bg3); transition: var(--transition); flex-shrink: 0; }
+  .step.active .step-dot { border-color: var(--accent); color: #0a0a0f; background: var(--accent); }
+  .step.done .step-dot { border-color: var(--green); color: #0a0a0f; background: var(--green); }
+  .step-label { font-size: 11px; color: var(--muted); margin-left: 8px; white-space: nowrap; }
+  .step.active .step-label { color: var(--accent); }
+  .step.done .step-label { color: var(--green); }
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; min-width: 20px; }
+  .step-line.done { background: var(--green); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: var(--transition); padding: 16px; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 100%; max-width: 420px; transform: translateY(20px) scale(0.97); transition: var(--transition); }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .modal-title { font-family: 'Oswald', sans-serif; font-size: 24px; letter-spacing: 1px; }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; transition: var(--transition); }
+  .modal-close:hover { color: var(--text); }
+  .modal-tabs { display: flex; background: var(--bg3); border-radius: 8px; padding: 4px; margin-bottom: 28px; }
+  .modal-tab { flex: 1; padding: 8px; border: none; background: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px; transition: var(--transition); font-family: 'DM Sans', sans-serif; }
+  .modal-tab.active { background: var(--accent); color: #0a0a0f; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
+  .toast { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-size: 13px; max-width: 300px; display: flex; align-items: center; gap: 10px; animation: slideInRight 0.3s ease, fadeOut 0.4s 2.6s ease forwards; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+  .toast.info { border-left: 3px solid var(--teal); }
+  @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateX(100%); } }
+
+  /* PROCESSING */
+  .processing-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(10,10,15,0.95); backdrop-filter: blur(16px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; opacity: 0; pointer-events: none; transition: var(--transition); }
+  .processing-overlay.active { opacity: 1; pointer-events: all; }
+  .processing-spinner { width: 64px; height: 64px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .processing-text { font-family: 'Oswald', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--muted); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* FOOTER */
+  footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 48px clamp(16px, 5vw, 80px); margin-top: 60px; }
+  .footer-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; }
+  .footer-brand .nav-logo { display: inline-block; margin-bottom: 12px; }
+  .footer-brand p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .footer-col h5 { font-family: 'Oswald', sans-serif; letter-spacing: 1px; font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .footer-col a { display: block; color: var(--muted); font-size: 13px; margin-bottom: 8px; text-decoration: none; cursor: pointer; transition: var(--transition); }
+  .footer-col a:hover { color: var(--text); }
+  .footer-bottom { max-width: 1200px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--muted); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp 0.5s ease forwards; }
+  .fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; }
+  .fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
+  .fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
+
+  .divider { height: 1px; background: var(--border); margin: 0 clamp(16px, 5vw, 80px); }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .big-icon { font-size: 48px; margin-bottom: 16px; }
+
+  #nowShowing { padding-top: 80px; }
+
+  @media (max-width: 768px) {
+    .nav-links, .nav-right { display: none; }
+    .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px; gap: 4px; }
+    .hamburger { display: flex; }
+    .movies-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .steps .step-label { display: none; }
+    .seat-footer { flex-direction: column; align-items: flex-start; }
+    .seat { width: 26px; height: 22px; }
+    .seat-row { gap: 5px; }
+  }
+  @media (max-width: 480px) {
+    .movies-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-logo" onclick="showPage('home')">CINE<span>VAULT</span></div>
+  <div class="nav-links" id="navLinks">
+    <a onclick="showPage('home')" class="active" id="nav-home">Home</a>
+    <a onclick="showPage('home')" id="nav-movies">Movies</a>
+    <a href="#" id="nav-contact">Contact</a>
+  </div>
+  <div class="nav-right" id="navRight">
+    <button class="btn-login" onclick="openModal('login')">Login</button>
+    <button class="btn-register" onclick="openModal('register')">Register</button>
+  </div>
+  <div class="hamburger" id="hamburger" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="hero" id="nowShowing">
+    <div class="hero-bg"></div>
+    <div class="hero-grain"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow fade-up">🎬 Now Showing — 2023–2026</div>
+      <h1 class="hero-title fade-up fade-up-delay-1">BOOK YOUR<br><em>PERFECT</em><br>SEAT</h1>
+      <p class="hero-sub fade-up fade-up-delay-2">Premium cinema experience. Real-time seat selection. Instant booking confirmation. Your movie night, perfected.</p>
+      <div class="hero-actions fade-up fade-up-delay-3">
+        <button class="btn btn-primary btn-lg" onclick="document.getElementById('moviesSection').scrollIntoView({behavior:'smooth'})">🎟️ Browse Movies</button>
+        <button class="btn btn-secondary btn-lg" onclick="openModal('login')">Sign In</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong>50+</strong><span>Movies</span></div>
+        <div class="stat"><strong>12</strong><span>Screens</span></div>
+        <div class="stat"><strong>4.9★</strong><span>Rating</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search movies, genres, actors..." oninput="filterMovies()">
+      </div>
+      <div class="filter-chips">
+        <div class="chip active" data-genre="all" onclick="setGenre(this,'all')">All</div>
+        <div class="chip" data-genre="Action" onclick="setGenre(this,'Action')">Action</div>
+        <div class="chip" data-genre="Drama" onclick="setGenre(this,'Drama')">Drama</div>
+        <div class="chip" data-genre="Sci-Fi" onclick="setGenre(this,'Sci-Fi')">Sci-Fi</div>
+        <div class="chip" data-genre="Horror" onclick="setGenre(this,'Horror')">Horror</div>
+        <div class="chip" data-genre="Comedy" onclick="setGenre(this,'Comedy')">Comedy</div>
+        <div class="chip" data-genre="Thriller" onclick="setGenre(this,'Thriller')">Thriller</div>
+        <div class="chip" data-genre="Animation" onclick="setGenre(this,'Animation')">Animation</div>
+        <div class="chip" data-genre="Bollywood" onclick="setGenre(this,'Bollywood')">Bollywood</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="moviesSection">
+    <div class="section-header">
+      <h2 class="section-title">NOW <span>SHOWING</span></h2>
+      <span id="movieCount" style="color:var(--muted);font-size:13px;"></span>
+    </div>
+    <div class="movies-grid" id="moviesGrid"></div>
+    <div class="empty-state" id="noResults" style="display:none;">
+      <div class="big-icon">🎭</div>
+      <p>No movies match your search. Try a different genre or keyword.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="nav-logo">CINE<span style="-webkit-text-fill-color:var(--teal);color:var(--teal);">VAULT</span></div>
+        <p>Premium cinema booking experience for movie lovers. Book seats, enjoy the show.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Navigate</h5>
+        <a onclick="showPage('home')">Home</a>
+        <a onclick="showPage('home')">Movies</a>
+        <a onclick="openModal('login')">My Bookings</a>
+      </div>
+      <div class="footer-col">
+        <h5>Support</h5>
+        <a href="#">Help Center</a>
+        <a href="#">Refund Policy</a>
+        <a href="#">Contact Us</a>
+      </div>
+      <div class="footer-col">
+        <h5>Connect</h5>
+        <a href="#">Twitter / X</a>
+        <a href="#">Instagram</a>
+        <a href="#">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2025 CineVault. Built with ❤️ for movie lovers.</div>
+  </footer>
+</div>
+
+<!-- MOVIE DETAIL PAGE -->
+<div class="page" id="page-detail">
+  <div class="detail-hero" id="detailHero">
+    <div class="detail-poster-bg" id="detailBg"></div>
+    <div class="detail-hero-bg"></div>
+    <div class="detail-content">
+      <div class="detail-poster" id="detailPosterWrap"></div>
+      <div class="detail-info">
+        <div class="detail-tags" id="detailTags"></div>
+        <h1 class="detail-title" id="detailTitle">Movie Title</h1>
+        <p class="detail-desc" id="detailDesc"></p>
+        <div class="detail-actions">
+          <button class="btn btn-primary btn-lg" onclick="goToSeats()">🎟️ Select Seats</button>
+          <button class="btn btn-secondary" onclick="showPage('home')">← Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-section">
+    <h3>Trailer</h3>
+    <div class="trailer-wrap"><iframe id="trailerFrame" allowfullscreen></iframe></div>
+  </div>
+  <div class="detail-section">
+    <h3>Cast & Crew</h3>
+    <div class="cast-grid" id="castGrid"></div>
+  </div>
+  <div class="detail-section">
+    <h3>Show Timings</h3>
+    <div class="showtimes" id="showTimes"></div>
+  </div>
+  <div class="detail-section" style="text-align:center;padding-bottom:60px;">
+    <button class="btn btn-primary btn-lg" onclick="goToSeats()">🎟️ Book Now — Select Seats</button>
+  </div>
+</div>
+
+<!-- SEAT SELECTION PAGE -->
+<div class="page" id="page-seats">
+  <div class="seat-page">
+    <div class="seat-header">
+      <button class="btn btn-ghost btn-sm" onclick="showPage('detail')" style="margin-bottom:12px;">← Back</button>
+      <h2 id="seatMovieTitle">Movie Name</h2>
+      <div class="seat-meta">
+        <span>📅 <strong id="seatDate">Date</strong></span>
+        <span>🕐 <strong id="seatTime">Time</strong></span>
+        <span>🏛️ <strong>Screen 3 — Dolby Atmos</strong></span>
+        <span>₹<strong id="seatPricePerSeat">150</strong>/seat</span>
+      </div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen"></div>
+      <div class="screen-label">Screen — All eyes this way</div>
+    </div>
+    <div class="seat-layout" id="seatLayout"></div>
+    <div class="seat-legend">
+      <div class="legend-item"><div class="legend-swatch avail"></div>Available</div>
+      <div class="legend-item"><div class="legend-swatch booked"></div>Booked</div>
+      <div class="legend-item"><div class="legend-swatch selected"></div>Selected</div>
+    </div>
+    <div class="seat-footer">
+      <div class="selected-info">
+        <div class="selected-seats">Selected: <strong id="selectedSeatLabels">None</strong></div>
+        <div class="total-price">₹<span id="totalPriceDisplay">0</span> <small>total</small></div>
+      </div>
+      <button class="btn btn-primary btn-lg" id="proceedBtn" onclick="goToSummary()" disabled style="opacity:0.5;">Proceed to Summary →</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING SUMMARY PAGE -->
+<div class="page" id="page-summary">
+  <div class="flow-page">
+    <div class="steps">
+      <div class="step done"><div class="step-dot">✓</div><span class="step-label">Seats</span></div>
+      <div class="step-line done"></div>
+      <div class="step active"><div class="step-dot">2</div><span class="step-label">Summary</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-dot">3</div><span class="step-label">Payment</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-dot">4</div><span class="step-label">Confirm</span></div>
+    </div>
+    <h1 class="flow-title">BOOKING <em style="color:var(--accent)">SUMMARY</em></h1>
+    <p class="flow-sub">Review your booking details before proceeding to payment.</p>
+    <div class="booking-card">
+      <h4>🎬 Movie Details</h4>
+      <div class="booking-row"><span class="booking-label">Movie</span><span class="booking-value" id="sumMovie"></span></div>
+      <div class="booking-row"><span class="booking-label">Genre</span><span class="booking-value" id="sumGenre"></span></div>
+      <div class="booking-row"><span class="booking-label">Date</span><span class="booking-value" id="sumDate"></span></div>
+      <div class="booking-row"><span class="booking-label">Showtime</span><span class="booking-value" id="sumTime"></span></div>
+      <div class="booking-row"><span class="booking-label">Screen</span><span class="booking-value">Screen 3 — Dolby Atmos</span></div>
+    </div>
+    <div class="booking-card">
+      <h4>🪑 Seat Details</h4>
+      <div class="booking-row"><span class="booking-label">Seats</span><span class="booking-value" id="sumSeats"></span></div>
+      <div class="booking-row"><span class="booking-label">No. of Seats</span><span class="booking-value" id="sumQty"></span></div>
+      <div class="booking-row"><span class="booking-label">Price/Seat</span><span class="booking-value" id="sumPricePer"></span></div>
+      <div class="booking-row"><span class="booking-label">Subtotal</span><span class="booking-value" id="sumSubtotal"></span></div>
+      <div class="booking-row"><span class="booking-label">Convenience Fee</span><span class="booking-value" id="sumFee"></span></div>
+      <div class="booking-row"><span class="booking-label">GST (18%)</span><span class="booking-value" id="sumGst"></span></div>
+      <div class="booking-row" style="padding-top:16px;border-top:1px solid var(--accent);border-bottom:none;">
+        <span class="booking-label" style="font-weight:700;font-size:15px;">TOTAL</span>
+        <span class="booking-total" id="sumTotal"></span>
+      </div>
+    </div>
+    <div style="margin-bottom:28px;">⏳ Seat hold expires in: <strong style="color:var(--accent)"><span id="cdMin">09</span>:<span id="cdSec">59</span></strong></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="showPage('seats')">← Change Seats</button>
+      <button class="btn btn-primary btn-lg" onclick="showPage('payment')">Proceed to Payment →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT PAGE -->
+<div class="page" id="page-payment">
+  <div class="flow-page">
+    <div class="steps">
+      <div class="step done"><div class="step-dot">✓</div><span class="step-label">Seats</span></div>
+      <div class="step-line done"></div>
+      <div class="step done"><div class="step-dot">✓</div><span class="step-label">Summary</span></div>
+      <div class="step-line done"></div>
+      <div class="step active"><div class="step-dot">3</div><span class="step-label">Payment</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-dot">4</div><span class="step-label">Confirm</span></div>
+    </div>
+    <h1 class="flow-title">PAYMENT</h1>
+    <p class="flow-sub">🔒 Secured with 256-bit SSL encryption. Test mode active.</p>
+    <div class="booking-card" style="margin-bottom:12px;">
+      <div class="booking-row" style="border:none;padding:0;"><span class="booking-label">Amount to Pay</span><span class="booking-total" id="payAmount"></span></div>
+    </div>
+    <div class="booking-card">
+      <h4>💳 Payment Method</h4>
+      <div class="payment-icons">
+        <div class="pay-icon visa">VISA</div>
+        <div class="pay-icon mc">MC</div>
+        <div class="pay-icon" style="font-size:10px;color:var(--muted);">AMEX</div>
+        <div class="pay-icon" style="font-size:9px;color:var(--teal);">UPI</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cardholder Name</label>
+        <div class="input-group"><span class="input-icon">👤</span><input type="text" class="form-input" id="cardName" placeholder="John Doe"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Card Number</label>
+        <div class="input-group"><span class="input-icon">💳</span><input type="text" class="form-input" id="cardNumber" placeholder="4242  4242  4242  4242" maxlength="19" oninput="formatCard(this)"></div>
+        <small style="color:var(--muted);font-size:11px;margin-top:4px;display:block;">Test: 4242 4242 4242 4242</small>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Expiry Date</label><input type="text" class="form-input" id="cardExpiry" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)"></div>
+        <div class="form-group"><label class="form-label">CVV</label><input type="password" class="form-input" id="cardCvv" placeholder="•••" maxlength="3"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email (for ticket)</label><input type="email" class="form-input" id="payEmail" placeholder="you@example.com"></div>
+      <div class="secure-note">🔒 Your card details are encrypted and never stored.</div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="showPage('summary')">← Back</button>
+      <button class="btn btn-primary btn-lg" id="payBtn" onclick="processPayment()">🔒 Pay ₹<span id="payBtnAmt"></span></button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:16px;">This is a test payment system. No real charges will be made.</p>
+  </div>
+</div>
+
+<!-- CONFIRMATION PAGE -->
+<div class="page" id="page-confirm">
+  <div class="flow-page" style="max-width:600px;">
+    <div class="steps">
+      <div class="step done"><div class="step-dot">✓</div><span class="step-label">Seats</span></div>
+      <div class="step-line done"></div>
+      <div class="step done"><div class="step-dot">✓</div><span class="step-label">Summary</span></div>
+      <div class="step-line done"></div>
+      <div class="step done"><div class="step-dot">✓</div><span class="step-label">Payment</span></div>
+      <div class="step-line done"></div>
+      <div class="step active"><div class="step-dot">✓</div><span class="step-label">Confirm</span></div>
+    </div>
+    <div style="text-align:center;margin-bottom:32px;">
+      <div class="confirm-icon">✅</div>
+      <h1 class="flow-title" style="text-align:center;">BOOKING <em style="color:var(--green)">CONFIRMED</em></h1>
+      <p style="color:var(--muted);font-size:14px;">Your tickets are confirmed! Check your email for details.</p>
+      <div class="booking-id" id="confirmBookingId">CV-XXXXXX</div>
+      <div><span class="badge badge-success">✓ Payment Successful</span></div>
+    </div>
+    <div class="ticket-card" id="ticketCard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="nav-logo" style="font-size:20px;">CINE<span style="-webkit-text-fill-color:var(--teal);color:var(--teal);">VAULT</span></div>
+        <span class="badge badge-success">CONFIRMED</span>
+      </div>
+      <h2 style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:12px;" id="ticketMovieName"></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Date</div><div style="font-weight:600;margin-top:2px;" id="ticketDate"></div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Time</div><div style="font-weight:600;margin-top:2px;" id="ticketTime"></div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Screen</div><div style="font-weight:600;margin-top:2px;">Screen 3 — Dolby Atmos</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Seats</div><div style="font-weight:600;margin-top:2px;color:var(--teal);" id="ticketSeats"></div></div>
+      </div>
+      <hr class="ticket-divider">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Total Paid</div><div style="font-family:'Oswald';font-size:22px;color:var(--accent);" id="ticketTotal"></div></div>
+        <div style="text-align:right;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Booking ID</div><div style="font-family:'Oswald';font-size:16px;letter-spacing:2px;color:var(--accent);" id="ticketBookingId"></div></div>
+      </div>
+      <div class="ticket-barcode">
+        <div class="barcode" id="ticketBarcode">||| || ||| | |||| || |||</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="ticketBarcodeNum"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;">
+      <button class="btn btn-primary btn-lg" onclick="downloadTicket()">⬇ Download Ticket</button>
+      <button class="btn btn-secondary" onclick="showPage('home')">🏠 Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Welcome Back</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="loginTab" onclick="switchTab('login')">Login</button>
+      <button class="modal-tab" id="registerTab" onclick="switchTab('register')">Register</button>
+    </div>
+    <div class="tab-content active" id="loginContent">
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="you@example.com"></div>
+      <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="loginPassword" placeholder="••••••••"></div>
+      <button class="btn btn-primary btn-full" onclick="handleLogin()">Login →</button>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);">Test: any email + password works</p>
+    </div>
+    <div class="tab-content" id="registerContent">
+      <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="regName" placeholder="John Doe"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="regEmail" placeholder="you@example.com"></div>
+      <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="regPassword" placeholder="Min. 6 characters"></div>
+      <button class="btn btn-primary btn-full" onclick="handleRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROCESSING OVERLAY -->
+<div class="processing-overlay" id="processingOverlay">
+  <div class="processing-spinner"></div>
+  <div class="processing-text" id="processingText">Processing...</div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+// TMDB POSTER BASE URL
+// Using TMDB image CDN with known poster paths
+// ============================================================
+const POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
+
+// ============================================================
+// MOVIES DATA — 50 Movies with real poster paths
+// ============================================================
+const MOVIES = [
+  // ---- HOLLYWOOD ----
+  {
+    id: 1, name: 'Oppenheimer', genre: 'Drama', duration: '3h 00m', rating: 8.9,
+    badge: 'HOT', year: 2023,
+    poster: POSTER_BASE + '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+    desc: 'The story of J. Robert Oppenheimer and the development of the atomic bomb during WWII. A masterful exploration of genius, moral reckoning, and the birth of the nuclear age.',
+    trailer: 'https://www.youtube.com/embed/uYPbbksJxIg',
+    cast: [{ name: 'Cillian Murphy', role: 'J. Robert Oppenheimer', emoji: '🧑‍🔬' }, { name: 'Emily Blunt', role: 'Katherine Oppenheimer', emoji: '👩' }, { name: 'Matt Damon', role: 'Gen. Groves', emoji: '🎖️' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '2:00 PM', '6:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 350, color: '#e8b04b'
+  },
+  {
+    id: 2, name: 'Barbie', genre: 'Comedy', duration: '1h 54m', rating: 7.0,
+    badge: 'HOT', year: 2023,
+    poster: POSTER_BASE + '/iuFNMS8vlzvpbaLamecwxkd4Rnx.jpg',
+    desc: 'Barbie and Ken embark on a journey from Barbieland to the real world. A vibrant, witty and surprisingly profound commentary on identity, feminism, and what it means to be human.',
+    trailer: 'https://www.youtube.com/embed/pBk4NYhWNMM',
+    cast: [{ name: 'Margot Robbie', role: 'Barbie', emoji: '👱‍♀️' }, { name: 'Ryan Gosling', role: 'Ken', emoji: '🤴' }, { name: 'America Ferrera', role: 'Gloria', emoji: '👩' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:30 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 280, color: '#ff69b4'
+  },
+  {
+    id: 3, name: 'Dune: Part Two', genre: 'Sci-Fi', duration: '2h 46m', rating: 8.5,
+    badge: 'HOT', year: 2024,
+    poster: POSTER_BASE + '/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg',
+    desc: 'Paul Atreides unites with the Fremen while on a warpath of revenge against the conspirators who destroyed his family. An epic continuation of the most ambitious sci-fi saga.',
+    trailer: 'https://www.youtube.com/embed/Way9Dexny3w',
+    cast: [{ name: 'Timothée Chalamet', role: 'Paul Atreides', emoji: '🤴' }, { name: 'Zendaya', role: 'Chani', emoji: '👩‍🦱' }, { name: 'Austin Butler', role: 'Feyd-Rautha', emoji: '😈' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }],
+    pricePerSeat: 320, color: '#c8a850'
+  },
+  {
+    id: 4, name: 'Deadpool & Wolverine', genre: 'Action', duration: '2h 08m', rating: 7.8,
+    badge: 'NEW', year: 2024,
+    poster: POSTER_BASE + '/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg',
+    desc: 'Deadpool is recruited by the Time Variance Authority and must convince a reluctant Wolverine to join him. An irreverent, fourth-wall-breaking MCU extravaganza packed with fan service.',
+    trailer: 'https://www.youtube.com/embed/73_1biulkYk',
+    cast: [{ name: 'Ryan Reynolds', role: 'Deadpool', emoji: '🔴' }, { name: 'Hugh Jackman', role: 'Wolverine', emoji: '🐺' }, { name: 'Emma Corrin', role: 'Cassandra Nova', emoji: '🦹‍♀️' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:30 PM', '7:00 PM', '10:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:30 PM'] }],
+    pricePerSeat: 300, color: '#ff5f5f'
+  },
+  {
+    id: 5, name: 'Mission: Impossible – Dead Reckoning', genre: 'Action', duration: '2h 43m', rating: 7.7,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/NNxYkU70HPurnNCSiCjYAmacwm.jpg',
+    desc: 'Ethan Hunt and his IMF team must track down a terrifying new weapon that threatens all of humanity before it falls into the wrong hands.',
+    trailer: 'https://www.youtube.com/embed/avz06PDqgNI',
+    cast: [{ name: 'Tom Cruise', role: 'Ethan Hunt', emoji: '🕵️' }, { name: 'Hayley Atwell', role: 'Grace', emoji: '👩‍💼' }, { name: 'Ving Rhames', role: 'Luther', emoji: '💪' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:30 PM', '5:00 PM', '8:30 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '2:30 PM', '6:30 PM'] }],
+    pricePerSeat: 280, color: '#e8b04b'
+  },
+  {
+    id: 6, name: 'John Wick: Chapter 4', genre: 'Action', duration: '2h 49m', rating: 7.7,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/vZloFAK7NmvMGKE7VkF5UHaz0I.jpg',
+    desc: 'John Wick uncovers a path to defeating the High Table but before he can earn his freedom, Wick must face off against a new enemy — the Marquis — whose power over the Table is absolute.',
+    trailer: 'https://www.youtube.com/embed/qEVUtrk8_B4',
+    cast: [{ name: 'Keanu Reeves', role: 'John Wick', emoji: '🔫' }, { name: 'Donnie Yen', role: 'Caine', emoji: '🥷' }, { name: 'Bill Skarsgård', role: 'Marquis', emoji: '🎩' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '2:00 PM', '6:00 PM', '9:30 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 270, color: '#2dd4bf'
+  },
+  {
+    id: 7, name: 'Fast X', genre: 'Action', duration: '2h 21m', rating: 5.9,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/fiVW06jE7z9YnO4trhaMEdclSiC.jpg',
+    desc: 'Dom Toretto and his family are targeted by the vengeful son of drug lord Hernan Reyes, whose mission is to exact revenge across the globe.',
+    trailer: 'https://www.youtube.com/embed/eoOaKN4qCKw',
+    cast: [{ name: 'Vin Diesel', role: 'Dom Toretto', emoji: '🚗' }, { name: 'Jason Momoa', role: 'Dante', emoji: '😈' }, { name: 'Michelle Rodriguez', role: 'Letty', emoji: '💪' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 240, color: '#ff5f5f'
+  },
+  {
+    id: 8, name: 'Spider-Man: Across the Spider-Verse', genre: 'Animation', duration: '2h 20m', rating: 8.6,
+    badge: 'HOT', year: 2023,
+    poster: POSTER_BASE + '/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg',
+    desc: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. A visually stunning animated masterpiece.',
+    trailer: 'https://www.youtube.com/embed/cqGjhVJWtEg',
+    cast: [{ name: 'Shameik Moore', role: 'Miles Morales', emoji: '🕷️' }, { name: 'Hailee Steinfeld', role: 'Gwen Stacy', emoji: '🕸️' }, { name: 'Oscar Isaac', role: 'Miguel O\'Hara', emoji: '🦸' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }],
+    pricePerSeat: 260, color: '#ff5f5f'
+  },
+  {
+    id: 9, name: 'Guardians of the Galaxy Vol. 3', genre: 'Action', duration: '2h 30m', rating: 7.9,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/r2J02Z2OpNTctfOSN1uf7tcnMDY.jpg',
+    desc: "The Guardians embark on a mission to protect Rocket from his dark past. An emotional, funny and action-packed farewell to the beloved MCU team.",
+    trailer: 'https://www.youtube.com/embed/u3V5KDHRQvk',
+    cast: [{ name: 'Chris Pratt', role: 'Star-Lord', emoji: '⭐' }, { name: 'Bradley Cooper', role: 'Rocket', emoji: '🦝' }, { name: 'Zoe Saldana', role: 'Gamora', emoji: '💚' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 270, color: '#e8b04b'
+  },
+  {
+    id: 10, name: 'The Flash', genre: 'Action', duration: '2h 24m', rating: 7.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/rktDFPbfHfUbArZ6OOOKsXcv0Bm.jpg',
+    desc: 'Barry Allen uses his super speed to travel back in time and change history, but his attempt to save his family creates a world without super heroes.',
+    trailer: 'https://www.youtube.com/embed/hebWYacbdvc',
+    cast: [{ name: 'Ezra Miller', role: 'Barry Allen', emoji: '⚡' }, { name: 'Michael Keaton', role: 'Batman', emoji: '🦇' }, { name: 'Sasha Calle', role: 'Supergirl', emoji: '💫' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '2:00 PM', '6:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 250, color: '#ff5f5f'
+  },
+  {
+    id: 11, name: 'Godzilla x Kong: The New Empire', genre: 'Action', duration: '1h 55m', rating: 6.3,
+    badge: 'NEW', year: 2024,
+    poster: POSTER_BASE + '/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg',
+    desc: 'Two ancient titans, Godzilla and Kong, clash in an epic battle as humans unravel their intertwined origins and connection to Skull Island\'s mysteries.',
+    trailer: 'https://www.youtube.com/embed/odM92ap8_c0',
+    cast: [{ name: 'Rebecca Hall', role: 'Dr. Andrews', emoji: '👩‍🔬' }, { name: 'Brian Tyree Henry', role: 'Bernie', emoji: '🎤' }, { name: 'Dan Stevens', role: 'Trapper', emoji: '🧑' }],
+    showtimes: [{ date: 'Today', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }, { date: 'Tomorrow', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }],
+    pricePerSeat: 260, color: '#4ade80'
+  },
+  {
+    id: 12, name: 'Inside Out 2', genre: 'Animation', duration: '1h 40m', rating: 7.9,
+    badge: 'NEW', year: 2024,
+    poster: POSTER_BASE + '/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg',
+    desc: 'Riley enters adolescence and new emotions enter Headquarters — including the very complicated Anxiety — threatening to upset the balance Joy has worked so hard to maintain.',
+    trailer: 'https://www.youtube.com/embed/LEjhY15eCx0',
+    cast: [{ name: 'Amy Poehler', role: 'Joy', emoji: '😊' }, { name: 'Maya Hawke', role: 'Anxiety', emoji: '😰' }, { name: 'Kensington Tallman', role: 'Riley', emoji: '👧' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:00 PM', '4:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '2:00 PM', '5:00 PM'] }],
+    pricePerSeat: 220, color: '#ffef5e'
+  },
+  {
+    id: 13, name: 'Kung Fu Panda 4', genre: 'Animation', duration: '1h 34m', rating: 6.9,
+    badge: null, year: 2024,
+    poster: POSTER_BASE + '/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg',
+    desc: 'Po must train a new Dragon Warrior while also facing a shape-shifting villain called the Chameleon who threatens the Valley of Peace.',
+    trailer: 'https://www.youtube.com/embed/OPdgHADEPRw',
+    cast: [{ name: 'Jack Black', role: 'Po', emoji: '🐼' }, { name: 'Viola Davis', role: 'The Chameleon', emoji: '🦎' }, { name: 'Awkwafina', role: 'Zhen', emoji: '🦊' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '1:30 PM', '4:30 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '2:30 PM', '5:30 PM'] }],
+    pricePerSeat: 200, color: '#e8b04b'
+  },
+  {
+    id: 14, name: 'The Fall Guy', genre: 'Action', duration: '2h 06m', rating: 7.1,
+    badge: null, year: 2024,
+    poster: POSTER_BASE + '/tSz1qsmSJon0rqjHBxXZmrotuse.jpg',
+    desc: 'A battle-scarred stuntman is drawn into a mission to find a missing movie star on the set of a massive film production.',
+    trailer: 'https://www.youtube.com/embed/d6ppKiMfbzE',
+    cast: [{ name: 'Ryan Gosling', role: 'Colt Seavers', emoji: '🎬' }, { name: 'Emily Blunt', role: 'Jody Moreno', emoji: '🎥' }, { name: 'Aaron Taylor-Johnson', role: 'Tom Ryder', emoji: '🌟' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 250, color: '#2dd4bf'
+  },
+  {
+    id: 15, name: 'The Beekeeper', genre: 'Action', duration: '1h 45m', rating: 6.8,
+    badge: null, year: 2024,
+    poster: POSTER_BASE + '/A7EByudX0eOzlkQ2FIbogzyazm2.jpg',
+    desc: 'One man\'s campaign for vengeance takes on national stakes after he is revealed to be a former operative of a powerful and clandestine organization.',
+    trailer: 'https://www.youtube.com/embed/2j3oryWb2h8',
+    cast: [{ name: 'Jason Statham', role: 'Adam Clay', emoji: '🐝' }, { name: 'Emmy Raver-Lampman', role: 'Agent Parker', emoji: '👩‍💼' }, { name: 'Josh Hutcherson', role: 'Derek Danforth', emoji: '😏' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '2:30 PM', '6:00 PM', '9:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '3:30 PM', '7:00 PM'] }],
+    pricePerSeat: 230, color: '#f5c518'
+  },
+  {
+    id: 16, name: 'Wonka', genre: 'Comedy', duration: '1h 56m', rating: 7.2,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/qhb1qOilapbapxWQn9jtRCMwLJV.jpg',
+    desc: 'The story of how the world\'s greatest inventor, magician and chocolate-maker Willy Wonka came to open his famous chocolate factory.',
+    trailer: 'https://www.youtube.com/embed/otNh9bTjXWg',
+    cast: [{ name: 'Timothée Chalamet', role: 'Willy Wonka', emoji: '🎩' }, { name: 'Olivia Colman', role: 'Mrs. Scrubbit', emoji: '🧹' }, { name: 'Hugh Grant', role: 'Oompa Loompa', emoji: '🍫' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:30 PM', '4:30 PM', '7:30 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '2:30 PM', '5:30 PM'] }],
+    pricePerSeat: 220, color: '#d946ef'
+  },
+  {
+    id: 17, name: 'The Hunger Games: Ballad of Songbirds & Snakes', genre: 'Drama', duration: '2h 37m', rating: 7.1,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/5a4JdoFwll5DRtKMe7JLuGQ9yJm.jpg',
+    desc: 'A young Coriolanus Snow mentors and forms an unexpected bond with his female tribute during the 10th Hunger Games.',
+    trailer: 'https://www.youtube.com/embed/oSIOxGNenJA',
+    cast: [{ name: 'Tom Blyth', role: 'Coriolanus Snow', emoji: '🥀' }, { name: 'Rachel Zegler', role: 'Lucy Gray Baird', emoji: '🎵' }, { name: 'Viola Davis', role: 'Dr. Volumnia Gaul', emoji: '🦁' }],
+    showtimes: [{ date: 'Today', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }, { date: 'Tomorrow', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }],
+    pricePerSeat: 250, color: '#e8b04b'
+  },
+  {
+    id: 18, name: 'The Creator', genre: 'Sci-Fi', duration: '2h 13m', rating: 6.8,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/vBZ0qvaRxqEhZwl6LWmruJqWE8Z.jpg',
+    desc: 'A soldier fighting against artificial intelligence must find and kill the creator of a mysterious weapon that has the power to end the war.',
+    trailer: 'https://www.youtube.com/embed/ex3C1-5Dhb8',
+    cast: [{ name: 'John David Washington', role: 'Joshua', emoji: '🤖' }, { name: 'Madeleine Yuna Voyles', role: 'Alphie', emoji: '👧' }, { name: 'Gemma Chan', role: 'Maya', emoji: '💻' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 260, color: '#2dd4bf'
+  },
+  {
+    id: 19, name: 'Napoleon', genre: 'Drama', duration: '2h 38m', rating: 6.5,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/jE5o7y9K6pZtWNNMEw3IdpHuncR.jpg',
+    desc: 'An epic that details the checkered rise and fall of French Emperor Napoleon Bonaparte and his obsessive relationship with his wife Josephine.',
+    trailer: 'https://www.youtube.com/embed/OAZWXUkrjPc',
+    cast: [{ name: 'Joaquin Phoenix', role: 'Napoleon Bonaparte', emoji: '👑' }, { name: 'Vanessa Kirby', role: 'Josephine', emoji: '🌹' }, { name: 'Tahar Rahim', role: 'Paul Barras', emoji: '🎭' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:30 PM', '5:30 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 240, color: '#6366f1'
+  },
+  {
+    id: 20, name: 'Transformers: Rise of the Beasts', genre: 'Action', duration: '2h 07m', rating: 6.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/gPbM0MK8CP8A174rmUwGsADNYKD.jpg',
+    desc: 'During the 1990s, a new faction of Transformers — the Maximals — join the Autobots as allies in the battle for Earth.',
+    trailer: 'https://www.youtube.com/embed/oKiQKXKievk',
+    cast: [{ name: 'Anthony Ramos', role: 'Noah Diaz', emoji: '🤖' }, { name: 'Dominique Fishback', role: 'Elena', emoji: '👩' }, { name: 'Peter Cullen', role: 'Optimus Prime', emoji: '🚛' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '2:30 PM', '6:30 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '3:30 PM', '7:30 PM'] }],
+    pricePerSeat: 220, color: '#e8b04b'
+  },
+  {
+    id: 21, name: 'The Nun II', genre: 'Horror', duration: '1h 50m', rating: 6.3,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/5gzzkR7y3hnY8AD1wXjCnVlHba5.jpg',
+    desc: '1956 France. A priest is murdered at a remote school. The Conjuring universe\'s most terrifying demon is once again on the hunt.',
+    trailer: 'https://www.youtube.com/embed/7R-WZXoZfkE',
+    cast: [{ name: 'Taissa Farmiga', role: 'Sister Irene', emoji: '⛪' }, { name: 'Jonas Bloquet', role: 'Frenchie', emoji: '😨' }, { name: 'Bonnie Aarons', role: 'Valak', emoji: '👿' }],
+    showtimes: [{ date: 'Today', slots: ['8:30 PM', '10:30 PM'] }, { date: 'Tomorrow', slots: ['9:00 PM', '11:00 PM'] }],
+    pricePerSeat: 220, color: '#1e1e2e'
+  },
+  {
+    id: 22, name: 'Scream VI', genre: 'Horror', duration: '2h 03m', rating: 7.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/wDWwtvkRRlgTiUr6TyLSMX8FCuZ.jpg',
+    desc: 'The survivors of the Ghostface killings leave Woodsboro behind and start a new chapter in New York City.',
+    trailer: 'https://www.youtube.com/embed/KXgMCnZlHqA',
+    cast: [{ name: 'Melissa Barrera', role: 'Sam Carpenter', emoji: '🔪' }, { name: 'Jenna Ortega', role: 'Tara Carpenter', emoji: '😱' }, { name: 'Jasmin Savoy Brown', role: 'Mindy', emoji: '🎬' }],
+    showtimes: [{ date: 'Today', slots: ['9:00 PM', '11:00 PM'] }, { date: 'Tomorrow', slots: ['8:30 PM', '10:30 PM'] }],
+    pricePerSeat: 210, color: '#ff5f5f'
+  },
+  {
+    id: 23, name: 'Five Nights at Freddy\'s', genre: 'Horror', duration: '1h 50m', rating: 5.8,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/A4j8S6moJS2zNtRR8LsXAsW4tjB.jpg',
+    desc: 'A troubled security guard begins working at Freddy Fazbear\'s Pizza. While spending his first night on the job, he realizes the animatronic characters come to life after dark.',
+    trailer: 'https://www.youtube.com/embed/0S9GCeJMGNc',
+    cast: [{ name: 'Josh Hutcherson', role: 'Mike Schmidt', emoji: '🐻' }, { name: 'Elizabeth Lail', role: 'Vanessa', emoji: '👮‍♀️' }, { name: 'Mary Stuart Masterson', role: 'Aunt Jane', emoji: '🏠' }],
+    showtimes: [{ date: 'Today', slots: ['9:30 PM', '11:30 PM'] }, { date: 'Tomorrow', slots: ['9:00 PM', '11:00 PM'] }],
+    pricePerSeat: 200, color: '#7c3aed'
+  },
+  {
+    id: 24, name: 'Talk to Me', genre: 'Horror', duration: '1h 35m', rating: 7.2,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/kdPMUlcgJCDIsaEkNvJHNWa5RuU.jpg',
+    desc: 'When a group of friends discover how to conjure spirits using an embalmed hand, they become addicted to the thrill — until one invitation goes too far.',
+    trailer: 'https://www.youtube.com/embed/Q3kkRxQKnhY',
+    cast: [{ name: 'Sophie Wilde', role: 'Mia', emoji: '🤚' }, { name: 'Alexandra Jensen', role: 'Jade', emoji: '👻' }, { name: 'Joe Bird', role: 'Riley', emoji: '😵' }],
+    showtimes: [{ date: 'Today', slots: ['8:00 PM', '10:00 PM'] }, { date: 'Tomorrow', slots: ['8:30 PM', '10:30 PM'] }],
+    pricePerSeat: 200, color: '#4a1942'
+  },
+  {
+    id: 25, name: 'The Killer', genre: 'Thriller', duration: '1h 58m', rating: 7.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/e2MSmsM7JNnNe7dRQE6bEPxjAHi.jpg',
+    desc: 'After a fateful near-miss, an assassin battles his employers, and himself, as he begins to question his methods, his morals, and his skills.',
+    trailer: 'https://www.youtube.com/embed/5VqTMULGxQE',
+    cast: [{ name: 'Michael Fassbender', role: 'The Killer', emoji: '🔫' }, { name: 'Tilda Swinton', role: 'The Expert', emoji: '🎯' }, { name: 'Charles Parnell', role: 'Hodges', emoji: '💼' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 240, color: '#1e293b'
+  },
+  {
+    id: 26, name: 'The Holdovers', genre: 'Drama', duration: '2h 13m', rating: 7.9,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/VHmNLOZBOmHkQ49aQxEQfZBFso.jpg',
+    desc: 'A curmudgeonly professor at a New England prep school is forced to remain on campus over the holidays with a troubled student and the school\'s cook, who recently lost a son in Vietnam.',
+    trailer: 'https://www.youtube.com/embed/AhKEnFfUFHw',
+    cast: [{ name: 'Paul Giamatti', role: 'Paul Hunham', emoji: '📚' }, { name: 'Dominic Sessa', role: 'Angus Tully', emoji: '🎓' }, { name: 'Da\'Vine Joy Randolph', role: 'Mary Lamb', emoji: '❤️' }],
+    showtimes: [{ date: 'Today', slots: ['11:30 AM', '2:30 PM', '5:30 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '3:00 PM', '6:00 PM'] }],
+    pricePerSeat: 220, color: '#78350f'
+  },
+  {
+    id: 27, name: 'The Iron Claw', genre: 'Drama', duration: '2h 12m', rating: 8.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/4W7yFtDGaJFyFCVSkyABFdZkUl3.jpg',
+    desc: 'The true story of the Von Erich family, the most famous wrestling dynasty in the world, who shaped the sport for decades.',
+    trailer: 'https://www.youtube.com/embed/pBJZxpXB7as',
+    cast: [{ name: 'Zac Efron', role: 'Kevin Von Erich', emoji: '💪' }, { name: 'Jeremy Allen White', role: 'Kerry Von Erich', emoji: '🏆' }, { name: 'Harris Dickinson', role: 'David Von Erich', emoji: '🤼' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '2:30 PM', '6:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '3:30 PM', '7:00 PM'] }],
+    pricePerSeat: 230, color: '#dc2626'
+  },
+  {
+    id: 28, name: 'Civil War', genre: 'Thriller', duration: '1h 49m', rating: 7.3,
+    badge: 'NEW', year: 2024,
+    poster: POSTER_BASE + '/sh7Rg8Er3tFcN9BpKIPATnGfh8k.jpg',
+    desc: 'A journey across a dystopian near-future America, following a team of military-embedded journalists as they race against time to reach DC before rebel factions descend upon the White House.',
+    trailer: 'https://www.youtube.com/embed/T0UqaFULFBA',
+    cast: [{ name: 'Kirsten Dunst', role: 'Lee Smith', emoji: '📸' }, { name: 'Wagner Moura', role: 'Joel', emoji: '🎥' }, { name: 'Cailee Spaeny', role: 'Jessie', emoji: '👩‍💻' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 240, color: '#dc2626'
+  },
+  {
+    id: 29, name: 'Challengers', genre: 'Drama', duration: '2h 11m', rating: 7.4,
+    badge: 'NEW', year: 2024,
+    poster: POSTER_BASE + '/H6vke7zGiuLsz4v4RPeReb9rsHJ.jpg',
+    desc: 'A tennis player turned coach puts her husband on a path to win a Challenger event where he must face his former best friend and her ex-lover.',
+    trailer: 'https://www.youtube.com/embed/EjBOqLjNMuU',
+    cast: [{ name: 'Zendaya', role: 'Tashi Duncan', emoji: '🎾' }, { name: 'Josh O\'Connor', role: 'Patrick', emoji: '🏆' }, { name: 'Mike Faist', role: 'Art', emoji: '❤️‍🔥' }],
+    showtimes: [{ date: 'Today', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }, { date: 'Tomorrow', slots: ['12:30 PM', '4:30 PM', '8:30 PM'] }],
+    pricePerSeat: 250, color: '#16a34a'
+  },
+  {
+    id: 30, name: 'Argylle', genre: 'Action', duration: '2h 19m', rating: 6.2,
+    badge: null, year: 2024,
+    poster: POSTER_BASE + '/95GFGFgRoFkFh0dP5ABfL74YRGF.jpg',
+    desc: 'A reclusive author who writes espionage novels finds herself embroiled in a real-world spy adventure that mirrors her fiction.',
+    trailer: 'https://www.youtube.com/embed/ePOcE7y_7c4',
+    cast: [{ name: 'Bryce Dallas Howard', role: 'Elly Conway', emoji: '🐱' }, { name: 'Sam Rockwell', role: 'Aidan', emoji: '🕵️' }, { name: 'Henry Cavill', role: 'Argylle', emoji: '🤵' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 230, color: '#6366f1'
+  },
+  {
+    id: 31, name: 'Anyone But You', genre: 'Comedy', duration: '1h 43m', rating: 6.3,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/lurEK87kukWNaHd0zYnsi3yzJrs.jpg',
+    desc: 'After an amazing first date, Bea and Ben\'s chemistry turns ice-cold. When they unexpectedly find themselves at a wedding in Australia together, they pretend to be a couple.',
+    trailer: 'https://www.youtube.com/embed/m1nkJKJiWjU',
+    cast: [{ name: 'Sydney Sweeney', role: 'Bea', emoji: '💕' }, { name: 'Glen Powell', role: 'Ben', emoji: '😎' }, { name: 'Dermot Mulroney', role: 'Bill', emoji: '🎊' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '2:00 PM', '5:00 PM', '8:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '3:00 PM', '6:00 PM'] }],
+    pricePerSeat: 200, color: '#ec4899'
+  },
+  {
+    id: 32, name: 'The Equalizer 3', genre: 'Thriller', duration: '1h 49m', rating: 7.1,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/b0Ej6fnXAZlQkwgKAGDcLzMj2wO.jpg',
+    desc: 'Robert McCall finds himself in southern Italy and realizes his friends there are controlled by local Camorra. As events turn deadly, McCall knows what he has to do.',
+    trailer: 'https://www.youtube.com/embed/E6LkYXFx-Uc',
+    cast: [{ name: 'Denzel Washington', role: 'Robert McCall', emoji: '⚖️' }, { name: 'Dakota Fanning', role: 'Emma Collins', emoji: '👩‍💼' }, { name: 'Eugenio Mastrandrea', role: 'Marco', emoji: '🤝' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:30 PM', '6:30 PM', '9:30 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }],
+    pricePerSeat: 240, color: '#1e293b'
+  },
+  {
+    id: 33, name: 'Rebel Moon – Part One', genre: 'Sci-Fi', duration: '2h 14m', rating: 5.5,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/6PxIKApNx6WbP9TT2ZrMnLPAqVL.jpg',
+    desc: 'A peaceful colony on the edge of the galaxy is threatened by the armies of a tyrannical regent. A mysterious stranger is tasked with finding warriors to join their cause.',
+    trailer: 'https://www.youtube.com/embed/62OzS0RHjGs',
+    cast: [{ name: 'Sofia Boutella', role: 'Kora', emoji: '⚔️' }, { name: 'Djimon Hounsou', role: 'General Titus', emoji: '🪐' }, { name: 'Ed Skrein', role: 'Atticus Noble', emoji: '👿' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 240, color: '#1e1b4b'
+  },
+  {
+    id: 34, name: 'The Marvels', genre: 'Action', duration: '1h 45m', rating: 5.9,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/9GBhzXMFjgcZ3FdR9w3bqCkdfIo.jpg',
+    desc: 'Carol Danvers, Kamala Khan, and Monica Rambeau find their powers entangled and must work together as a team to save the universe.',
+    trailer: 'https://www.youtube.com/embed/wS_qbAjZe7E',
+    cast: [{ name: 'Brie Larson', role: 'Carol Danvers', emoji: '⭐' }, { name: 'Teyonah Parris', role: 'Monica Rambeau', emoji: '✨' }, { name: 'Iman Vellani', role: 'Kamala Khan', emoji: '💫' }],
+    showtimes: [{ date: 'Today', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }, { date: 'Tomorrow', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }],
+    pricePerSeat: 240, color: '#7c3aed'
+  },
+  {
+    id: 35, name: 'Aquaman and the Lost Kingdom', genre: 'Action', duration: '2h 04m', rating: 5.8,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/7lTnXOy0iNtBAdRP3TZvaKJ77F6.jpg',
+    desc: 'Black Manta seeks revenge on Aquaman for his father\'s death. Aquaman must forge an unlikely alliance with his imprisoned brother to protect Atlantis.',
+    trailer: 'https://www.youtube.com/embed/7E1LHPpMvJ0',
+    cast: [{ name: 'Jason Momoa', role: 'Aquaman', emoji: '🔱' }, { name: 'Patrick Wilson', role: 'Orm', emoji: '🌊' }, { name: 'Yahya Abdul-Mateen II', role: 'Black Manta', emoji: '🦈' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '2:00 PM', '6:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 230, color: '#0ea5e9'
+  },
+  {
+    id: 36, name: 'Meg 2: The Trench', genre: 'Action', duration: '1h 56m', rating: 5.1,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/4m1Au3YkjqsxF8iwQy0fPYSxE0h.jpg',
+    desc: 'A research team encounters multiple Megalodons and other terrifying creatures while exploring the deepest depths of the ocean.',
+    trailer: 'https://www.youtube.com/embed/b7Hxh4JGrbs',
+    cast: [{ name: 'Jason Statham', role: 'Jonas Taylor', emoji: '🦈' }, { name: 'Wu Jing', role: 'Jiuming Zhang', emoji: '🌊' }, { name: 'Shuya Sophia Cai', role: 'Meiying', emoji: '👧' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 220, color: '#0c4a6e'
+  },
+  // ---- BOLLYWOOD ----
+  {
+    id: 37, name: 'Jawan', genre: 'Bollywood', duration: '2h 49m', rating: 7.1,
+    badge: 'HOT', year: 2023,
+    poster: POSTER_BASE + '/cO0yygJQGOFUkMB4I4Vl0FjGIBM.jpg',
+    desc: 'A high-octane action-thriller packed with social commentary. A man is driven by a personal vendetta to rectify the wrongs in society while also fighting against a formidable villain.',
+    trailer: 'https://www.youtube.com/embed/cHgTvFtBYRw',
+    cast: [{ name: 'Shah Rukh Khan', role: 'Vikram Rathore', emoji: '👑' }, { name: 'Nayanthara', role: 'Narmada', emoji: '👩‍✈️' }, { name: 'Vijay Sethupathi', role: 'Kaalee', emoji: '😈' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:30 PM', '5:00 PM', '8:30 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '2:30 PM', '6:00 PM'] }],
+    pricePerSeat: 300, color: '#dc2626'
+  },
+  {
+    id: 38, name: 'Pathaan', genre: 'Bollywood', duration: '2h 26m', rating: 6.4,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/5Wr7tqiyV5v9sSyWDQUXS0MKFVY.jpg',
+    desc: 'Pathaan, an exiled spy, must fight to save India from a massive terrorist attack led by a rogue agent with a personal vendetta against the country.',
+    trailer: 'https://www.youtube.com/embed/vqu4z34wENw',
+    cast: [{ name: 'Shah Rukh Khan', role: 'Pathaan', emoji: '🕵️' }, { name: 'Deepika Padukone', role: 'Rubai', emoji: '💃' }, { name: 'John Abraham', role: 'Jim', emoji: '💪' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '2:30 PM', '6:00 PM', '9:30 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '3:30 PM', '7:00 PM'] }],
+    pricePerSeat: 280, color: '#1d4ed8'
+  },
+  {
+    id: 39, name: 'Animal', genre: 'Bollywood', duration: '3h 21m', rating: 6.1,
+    badge: 'HOT', year: 2023,
+    poster: POSTER_BASE + '/qHHKT37nEGaHhGe5VsoFh4KbtEE.jpg',
+    desc: 'The son of a powerful industrialist returns to India after years of resentment, fighting to reclaim his father\'s love while unleashing ruthless violence against anyone who threatens his family.',
+    trailer: 'https://www.youtube.com/embed/TZkMjHNIi7E',
+    cast: [{ name: 'Ranbir Kapoor', role: 'Ranvijay', emoji: '🐺' }, { name: 'Rashmika Mandanna', role: 'Geetanjali', emoji: '❤️' }, { name: 'Anil Kapoor', role: 'Balbir Singh', emoji: '👔' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 300, color: '#7f1d1d'
+  },
+  {
+    id: 40, name: 'Dunki', genre: 'Bollywood', duration: '2h 41m', rating: 6.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/hY7uUaHjHGdABt0lQM3imKWRlCs.jpg',
+    desc: 'A group of ordinary people embark on an extraordinary journey — an illegal immigration route called Donkey Flight — to reach their dream destination.',
+    trailer: 'https://www.youtube.com/embed/zBGF3PQEt2Y',
+    cast: [{ name: 'Shah Rukh Khan', role: 'Hardy', emoji: '✈️' }, { name: 'Taapsee Pannu', role: 'Manu', emoji: '🌍' }, { name: 'Vikram Kochhar', role: 'Buggu', emoji: '😄' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:30 PM', '5:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '2:30 PM', '6:30 PM'] }],
+    pricePerSeat: 270, color: '#0369a1'
+  },
+  {
+    id: 41, name: 'Salaar', genre: 'Bollywood', duration: '2h 59m', rating: 6.3,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/mEWf4rxKHgWW9LqiPVWNRbifhiY.jpg',
+    desc: 'A ferocious man fights to protect his friend. A deadly promise made in the past sets forth a chain of violent events that tears apart empires and loyalties.',
+    trailer: 'https://www.youtube.com/embed/f_J5RLYJBK0',
+    cast: [{ name: 'Prabhas', role: 'Deva / Salaar', emoji: '⚔️' }, { name: 'Prithviraj Sukumaran', role: 'Vardha', emoji: '👑' }, { name: 'Shruti Haasan', role: 'Aadya', emoji: '💕' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 280, color: '#292524'
+  },
+  {
+    id: 42, name: 'Leo', genre: 'Bollywood', duration: '2h 44m', rating: 7.0,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/9rC0VfRGYKhDVjb0VoGAUhyufOC.jpg',
+    desc: 'A mild-mannered cafe owner\'s past as a dreaded gangster catches up with him when men from his past turn up in his small town.',
+    trailer: 'https://www.youtube.com/embed/7tSLKGdMCbs',
+    cast: [{ name: 'Vijay', role: 'Leo/Parthiban', emoji: '🦁' }, { name: 'Trisha Krishnan', role: 'Sathya', emoji: '👩' }, { name: 'Sanjay Dutt', role: 'Harold Das', emoji: '😈' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:00 PM', '5:30 PM', '9:00 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '3:00 PM', '6:30 PM'] }],
+    pricePerSeat: 260, color: '#b45309'
+  },
+  {
+    id: 43, name: 'Jailer', genre: 'Bollywood', duration: '2h 48m', rating: 7.6,
+    badge: 'HOT', year: 2023,
+    poster: POSTER_BASE + '/lcFTVXKbEBQf5FBMEyCMXsXJrPB.jpg',
+    desc: 'A retired jailer sets out to find his son\'s killers. As he unravels the mystery, he confronts his own past as a feared officer.',
+    trailer: 'https://www.youtube.com/embed/fDLQ_XhePTo',
+    cast: [{ name: 'Rajinikanth', role: 'Muthuvel Pandian', emoji: '👴' }, { name: 'Mohanlal', role: 'Tiger Muthuvel', emoji: '🐯' }, { name: 'Tamannaah Bhatia', role: 'Rolex', emoji: '💃' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '1:30 PM', '5:00 PM', '8:30 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '2:30 PM', '6:00 PM'] }],
+    pricePerSeat: 290, color: '#b45309'
+  },
+  {
+    id: 44, name: 'Tiger 3', genre: 'Bollywood', duration: '2h 36m', rating: 5.8,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/q1QRFi0zyT4LhkMt9U79eTTmgA8.jpg',
+    desc: 'Tiger and Zoya must fight to protect their family from a super villain who has framed Tiger as a traitor and stripped him of his country.',
+    trailer: 'https://www.youtube.com/embed/IG_JiJ68Oik',
+    cast: [{ name: 'Salman Khan', role: 'Tiger', emoji: '🐯' }, { name: 'Katrina Kaif', role: 'Zoya', emoji: '💪' }, { name: 'Emraan Hashmi', role: 'Aatish', emoji: '😈' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 260, color: '#b91c1c'
+  },
+  {
+    id: 45, name: 'Gadar 2', genre: 'Bollywood', duration: '2h 50m', rating: 5.5,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/2cDlCGECPGMGqzEfMYcBrEGDWtZ.jpg',
+    desc: 'Tara Singh returns to Pakistan to rescue his son who is held captive. A high-octane patriotic action sequel to the 2001 blockbuster.',
+    trailer: 'https://www.youtube.com/embed/tIB9FV1b7go',
+    cast: [{ name: 'Sunny Deol', role: 'Tara Singh', emoji: '💪' }, { name: 'Ameesha Patel', role: 'Sakeena', emoji: '🌹' }, { name: 'Utkarsh Sharma', role: 'Charanjeet', emoji: '👨‍👦' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '2:00 PM', '6:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 240, color: '#15803d'
+  },
+  {
+    id: 46, name: 'Fighter', genre: 'Bollywood', duration: '2h 46m', rating: 6.3,
+    badge: null, year: 2024,
+    poster: POSTER_BASE + '/xOBcKNONMvKaVCr0BUQRGiVGYAC.jpg',
+    desc: 'India\'s first aerial action franchise. The Air Dragon Squadron leads missions against Pakistan-backed terrorists at the India-Pakistan border.',
+    trailer: 'https://www.youtube.com/embed/a8N65NkV69Y',
+    cast: [{ name: 'Hrithik Roshan', role: 'Patty', emoji: '✈️' }, { name: 'Deepika Padukone', role: 'Minal Rathore', emoji: '👩‍✈️' }, { name: 'Anil Kapoor', role: 'Squadron Leader', emoji: '🎖️' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }],
+    pricePerSeat: 280, color: '#1d4ed8'
+  },
+  {
+    id: 47, name: 'Adipurush', genre: 'Bollywood', duration: '3h 01m', rating: 4.2,
+    badge: null, year: 2023,
+    poster: POSTER_BASE + '/qBiNDFWcIqiOBz0vVXrxLHrZXJf.jpg',
+    desc: 'A mythological epic based on the story of Ramayana. Lord Rama\'s quest to rescue his wife Sita from the demon king Raavan.',
+    trailer: 'https://www.youtube.com/embed/1Ge1fzDNBdM',
+    cast: [{ name: 'Prabhas', role: 'Rama', emoji: '🏹' }, { name: 'Kriti Sanon', role: 'Janaki', emoji: '🌺' }, { name: 'Saif Ali Khan', role: 'Lankesh', emoji: '👿' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:00 PM'] }],
+    pricePerSeat: 250, color: '#d97706'
+  },
+  {
+    id: 48, name: 'Avatar 3', genre: 'Sci-Fi', duration: '2h 30m', rating: 7.5,
+    badge: 'NEW', year: 2025,
+    poster: POSTER_BASE + '/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
+    desc: 'The Sully family continues to explore the vast wonders of Pandora. New clans, new environments, and a deeper exploration of the Na\'vi culture await.',
+    trailer: 'https://www.youtube.com/embed/a8N65NkV69Y',
+    cast: [{ name: 'Sam Worthington', role: 'Jake Sully', emoji: '🌿' }, { name: 'Zoe Saldana', role: 'Neytiri', emoji: '💙' }, { name: 'Sigourney Weaver', role: 'Kiri', emoji: '🌙' }],
+    showtimes: [{ date: 'Today', slots: ['10:00 AM', '2:00 PM', '6:00 PM', '10:00 PM'] }, { date: 'Tomorrow', slots: ['11:00 AM', '3:00 PM', '7:00 PM'] }],
+    pricePerSeat: 350, color: '#0891b2'
+  },
+  {
+    id: 49, name: 'The Batman Part II', genre: 'Thriller', duration: '2h 55m', rating: 8.0,
+    badge: 'NEW', year: 2026,
+    poster: POSTER_BASE + '/74xTEgt7R36Fpooo50r9T25onhq.jpg',
+    desc: 'Bruce Wayne continues his war on crime in Gotham, facing a new rogue\'s gallery while grappling with the corruption that runs through the city\'s veins.',
+    trailer: 'https://www.youtube.com/embed/mqqft2x_Aa4',
+    cast: [{ name: 'Robert Pattinson', role: 'Bruce Wayne / Batman', emoji: '🦇' }, { name: 'Zoë Kravitz', role: 'Selina Kyle', emoji: '🐱' }, { name: 'Paul Dano', role: 'The Riddler', emoji: '❓' }],
+    showtimes: [{ date: 'Today', slots: ['11:00 AM', '3:00 PM', '7:00 PM', '10:30 PM'] }, { date: 'Tomorrow', slots: ['12:00 PM', '4:00 PM', '8:30 PM'] }],
+    pricePerSeat: 320, color: '#1e293b'
+  },
+  {
+    id: 50, name: 'Wicked', genre: 'Drama', duration: '2h 40m', rating: 7.9,
+    badge: 'NEW', year: 2024,
+    poster: POSTER_BASE + '/xDGbZ0JJ3mYaGKy4Nzd9Kph4Y9G.jpg',
+    desc: 'Elphaba and Glinda\'s unlikely friendship blossoms as they navigate the magical Land of Oz. A stunning adaptation of the beloved Broadway musical.',
+    trailer: 'https://www.youtube.com/embed/6COmYeLsz4c',
+    cast: [{ name: 'Cynthia Erivo', role: 'Elphaba', emoji: '💚' }, { name: 'Ariana Grande', role: 'Glinda', emoji: '🌸' }, { name: 'Jonathan Bailey', role: 'Fiyero', emoji: '🌹' }],
+    showtimes: [{ date: 'Today', slots: ['10:30 AM', '2:30 PM', '6:30 PM'] }, { date: 'Tomorrow', slots: ['11:30 AM', '3:30 PM', '7:30 PM'] }],
+    pricePerSeat: 300, color: '#16a34a'
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  currentPage: 'home',
+  selectedMovie: null,
+  selectedDate: null,
+  selectedTime: null,
+  selectedSeats: [],
+  pricePerSeat: 0,
+  totalPrice: 0,
+  finalTotal: 0,
+  user: null,
+  bookingId: null,
+  currentGenre: 'all',
+};
+
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  state.currentPage = page;
+  window.scrollTo(0, 0);
+  if (page === 'home') renderMovies();
+  if (page === 'seats') renderSeats();
+  if (page === 'summary') populateSummary();
+  if (page === 'payment') populatePayment();
+  if (page === 'detail' && state.selectedMovie) renderDetail(state.selectedMovie);
+}
+
+// ============================================================
+// MOVIES RENDER
+// ============================================================
+function renderMovies() {
+  const grid = document.getElementById('moviesGrid');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const genre = state.currentGenre;
+  const noResults = document.getElementById('noResults');
+  const count = document.getElementById('movieCount');
+
+  let filtered = MOVIES.filter(m => {
+    const matchSearch = !search || m.name.toLowerCase().includes(search) || m.genre.toLowerCase().includes(search);
+    const matchGenre = genre === 'all' || m.genre === genre;
+    return matchSearch && matchGenre;
+  });
+
+  count.textContent = `${filtered.length} movies`;
+
+  if (filtered.length === 0) { grid.innerHTML = ''; noResults.style.display = 'block'; return; }
+  noResults.style.display = 'none';
+
+  grid.innerHTML = filtered.map(m => `
+    <div class="movie-card" onclick="openMovie(${m.id})">
+      <div class="movie-poster-wrap">
+        <img
+          class="movie-poster"
+          src="${m.poster}"
+          alt="${m.name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+          loading="lazy"
+        />
+        <div class="movie-poster-placeholder" style="display:none;background:linear-gradient(135deg,${m.color}22,${m.color}08)">
+          <div style="font-size:52px;">${m.genre === 'Bollywood' ? '🎬' : m.genre === 'Action' ? '💥' : m.genre === 'Sci-Fi' ? '🚀' : m.genre === 'Horror' ? '👻' : m.genre === 'Comedy' ? '😂' : m.genre === 'Thriller' ? '🕵️' : m.genre === 'Animation' ? '🎨' : '🎭'}</div>
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;">${m.genre.toUpperCase()}</div>
+        </div>
+      </div>
+      ${m.badge ? `<div class="movie-badge ${m.badge === 'NEW' ? 'new' : 'hot'}">${m.badge}</div>` : ''}
+      <div class="movie-card-overlay">
+        <button class="btn btn-primary btn-sm">Book Now →</button>
+      </div>
+      <div class="movie-info">
+        <div class="movie-name" title="${m.name}">${m.name}</div>
+        <div class="movie-meta">
+          <span class="movie-genre">${m.genre}</span>
+          <span class="movie-dur">⏱ ${m.duration}</span>
+          <span class="movie-rating">★ ${m.rating}</span>
+        </div>
+        <button class="btn btn-primary" onclick="event.stopPropagation();openMovie(${m.id})">Book Now →</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterMovies() { renderMovies(); }
+
+function setGenre(el, genre) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  state.currentGenre = genre;
+  renderMovies();
+}
+
+// ============================================================
+// MOVIE DETAIL
+// ============================================================
+function openMovie(id) {
+  state.selectedMovie = MOVIES.find(m => m.id === id);
+  state.selectedDate = null;
+  state.selectedTime = null;
+  showPage('detail');
+}
+
+function renderDetail(movie) {
+  document.getElementById('detailTitle').textContent = movie.name;
+  document.getElementById('detailDesc').textContent = movie.desc;
+
+  // Poster
+  const posterWrap = document.getElementById('detailPosterWrap');
+  posterWrap.innerHTML = `
+    <img src="${movie.poster}" alt="${movie.name}" style="width:200px;aspect-ratio:2/3;object-fit:cover;display:block;"
+      onerror="this.style.display='none';document.getElementById('detailFallback').style.display='flex'"
+    />
+    <div id="detailFallback" style="display:none;width:200px;aspect-ratio:2/3;background:var(--bg3);align-items:center;justify-content:center;font-size:60px;">🎬</div>
+  `;
+
+  // Background blur
+  document.getElementById('detailBg').style.backgroundImage = `url(${movie.poster})`;
+
+  document.getElementById('detailTags').innerHTML = `
+    <span class="tag tag-genre">${movie.genre}</span>
+    <span class="tag tag-rating">★ ${movie.rating}</span>
+    <span class="tag tag-dur">⏱ ${movie.duration}</span>
+    <span class="tag tag-dur">${movie.year}</span>
+    <span class="tag tag-dur">₹${movie.pricePerSeat}/seat</span>
+  `;
+
+  document.getElementById('castGrid').innerHTML = movie.cast.map(c => `
+    <div class="cast-card">
+      <div class="cast-avatar">${c.emoji}</div>
+      <div class="cast-name">${c.name}</div>
+      <div class="cast-role">${c.role}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('showTimes').innerHTML = movie.showtimes.map(d => `
+    <div class="showtime-row">
+      <div class="showtime-date">📅 ${d.date}</div>
+      <div class="showtime-slots">
+        ${d.slots.map(s => `
+          <button class="slot-btn ${state.selectedDate === d.date && state.selectedTime === s ? 'active' : ''}"
+            onclick="selectSlot('${d.date}','${s}',this)">${s}</button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('trailerFrame').src = movie.trailer;
+}
+
+function selectSlot(date, time, el) {
+  state.selectedDate = date;
+  state.selectedTime = time;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  showToast('info', `⏰ ${date} at ${time} selected`);
+}
+
+function goToSeats() {
+  if (!state.selectedDate || !state.selectedTime) {
+    showToast('error', '⚠️ Please select a showtime first!');
+    return;
+  }
+  state.selectedSeats = [];
+  showPage('seats');
+}
+
+// ============================================================
+// SEAT LAYOUT
+// ============================================================
+const BOOKED_SEATS = ['A2','A5','B3','B7','C1','C4','C8','D2','D6','D9','E3','E5','F1','F6','G4','G7','H2','H8'];
+
+function renderSeats() {
+  const movie = state.selectedMovie;
+  document.getElementById('seatMovieTitle').textContent = movie.name;
+  document.getElementById('seatDate').textContent = state.selectedDate;
+  document.getElementById('seatTime').textContent = state.selectedTime;
+  document.getElementById('seatPricePerSeat').textContent = movie.pricePerSeat;
+  state.pricePerSeat = movie.pricePerSeat;
+
+  const rows = ['A','B','C','D','E','F','G','H'];
+  const seatsPerRow = [8,10,10,10,10,10,10,8];
+  let html = '';
+
+  rows.forEach((row, i) => {
+    const total = seatsPerRow[i];
+    if (row === 'A') html += `<div class="seat-category-label">— PREMIUM (₹${movie.pricePerSeat + 50}) —</div>`;
+    else if (row === 'C') html += `<div class="seat-category-label">— STANDARD (₹${movie.pricePerSeat}) —</div>`;
+    else if (row === 'H') html += `<div class="seat-category-label">— ECONOMY (₹${movie.pricePerSeat - 50}) —</div>`;
+    else html += `<div class="seat-category-label"></div>`;
+
+    html += `<div class="seat-row"><div class="row-label">${row}</div>`;
+    for (let j = 1; j <= total; j++) {
+      const seatId = `${row}${j}`;
+      const isBooked = BOOKED_SEATS.includes(seatId);
+      const isSelected = state.selectedSeats.includes(seatId);
+      const cls = isBooked ? 'booked' : isSelected ? 'selected' : 'available';
+      if (j === Math.ceil(total / 2) + 1) html += `<div class="seat-gap"></div>`;
+      html += `<div class="seat ${cls}" id="seat-${seatId}" onclick="toggleSeat('${seatId}','${row}')" title="${seatId}">${j}</div>`;
+    }
+    html += `</div>`;
+  });
+
+  document.getElementById('seatLayout').innerHTML = html;
+  updateSeatFooter();
+}
+
+function getSeatPrice(row, basePrice) {
+  if (row === 'A' || row === 'B') return basePrice + 50;
+  if (row === 'H') return Math.max(basePrice - 50, 100);
+  return basePrice;
+}
+
+function toggleSeat(seatId, row) {
+  const el = document.getElementById('seat-' + seatId);
+  if (el.classList.contains('booked')) return;
+  const idx = state.selectedSeats.indexOf(seatId);
+  if (idx > -1) {
+    state.selectedSeats.splice(idx, 1);
+    el.classList.remove('selected'); el.classList.add('available');
+  } else {
+    if (state.selectedSeats.length >= 8) { showToast('error', '⚠️ Max 8 seats per booking'); return; }
+    state.selectedSeats.push(seatId);
+    el.classList.remove('available'); el.classList.add('selected');
+  }
+  updateSeatFooter();
+}
+
+function updateSeatFooter() {
+  const seats = state.selectedSeats;
+  const total = seats.reduce((sum, sid) => sum + getSeatPrice(sid[0], state.pricePerSeat), 0);
+  state.totalPrice = total;
+  document.getElementById('selectedSeatLabels').innerHTML = seats.length ? seats.join(', ') : 'None';
+  document.getElementById('totalPriceDisplay').textContent = total;
+  const btn = document.getElementById('proceedBtn');
+  btn.disabled = seats.length === 0;
+  btn.style.opacity = seats.length ? '1' : '0.5';
+}
+
+function goToSummary() {
+  if (state.selectedSeats.length === 0) { showToast('error', '⚠️ Select at least one seat'); return; }
+  showPage('summary');
+  startHoldTimer();
+}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function populateSummary() {
+  const m = state.selectedMovie;
+  const subtotal = state.totalPrice;
+  const fee = Math.round(subtotal * 0.025) + 10;
+  const gst = Math.round((subtotal + fee) * 0.18);
+  const total = subtotal + fee + gst;
+  state.finalTotal = total;
+
+  document.getElementById('sumMovie').textContent = m.name;
+  document.getElementById('sumGenre').textContent = m.genre;
+  document.getElementById('sumDate').textContent = state.selectedDate;
+  document.getElementById('sumTime').textContent = state.selectedTime;
+  document.getElementById('sumSeats').textContent = state.selectedSeats.join(', ');
+  document.getElementById('sumQty').textContent = state.selectedSeats.length + ' seat(s)';
+  document.getElementById('sumPricePer').textContent = '₹' + m.pricePerSeat + ' (varies by row)';
+  document.getElementById('sumSubtotal').textContent = '₹' + subtotal;
+  document.getElementById('sumFee').textContent = '₹' + fee;
+  document.getElementById('sumGst').textContent = '₹' + gst;
+  document.getElementById('sumTotal').textContent = '₹' + total;
+}
+
+let holdInterval = null;
+function startHoldTimer() {
+  let secs = 599;
+  clearInterval(holdInterval);
+  holdInterval = setInterval(() => {
+    secs--;
+    if (secs <= 0) { clearInterval(holdInterval); showToast('error', '⏰ Seat hold expired!'); setTimeout(() => showPage('seats'), 2000); return; }
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    const el = document.getElementById('cdMin');
+    if (el) { el.textContent = m; document.getElementById('cdSec').textContent = s; }
+  }, 1000);
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+function populatePayment() {
+  document.getElementById('payAmount').textContent = '₹' + state.finalTotal;
+  document.getElementById('payBtnAmt').textContent = state.finalTotal;
+}
+
+function formatCard(input) {
+  let v = input.value.replace(/\D/g, '').substring(0, 16);
+  input.value = v.match(/.{1,4}/g)?.join('  ') || v;
+}
+
+function formatExpiry(input) {
+  let v = input.value.replace(/\D/g, '').substring(0, 4);
+  if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+  input.value = v;
+}
+
+function processPayment() {
+  const name = document.getElementById('cardName').value.trim();
+  const num = document.getElementById('cardNumber').value.replace(/\s/g, '');
+  const exp = document.getElementById('cardExpiry').value.trim();
+  const cvv = document.getElementById('cardCvv').value.trim();
+  const email = document.getElementById('payEmail').value.trim();
+
+  if (!name || num.length < 16 || !exp || cvv.length < 3 || !email) {
+    showToast('error', '⚠️ Please fill in all payment details');
+    return;
+  }
+
+  showProcessing('🔒 Encrypting payment details...');
+  setTimeout(() => {
+    updateProcessing('🏦 Contacting payment gateway...');
+    setTimeout(() => {
+      updateProcessing('✅ Verifying transaction...');
+      setTimeout(() => {
+        hideProcessing();
+        clearInterval(holdInterval);
+        state.bookingId = 'CV-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        showPage('confirm');
+        populateConfirmation();
+        showToast('success', '🎉 Payment successful!');
+      }, 1500);
+    }, 1200);
+  }, 1000);
+}
+
+// ============================================================
+// CONFIRMATION
+// ============================================================
+function populateConfirmation() {
+  const m = state.selectedMovie;
+  document.getElementById('confirmBookingId').textContent = state.bookingId;
+  document.getElementById('ticketMovieName').textContent = m.name;
+  document.getElementById('ticketDate').textContent = state.selectedDate;
+  document.getElementById('ticketTime').textContent = state.selectedTime;
+  document.getElementById('ticketSeats').textContent = state.selectedSeats.join(', ');
+  document.getElementById('ticketTotal').textContent = '₹' + state.finalTotal;
+  document.getElementById('ticketBookingId').textContent = state.bookingId;
+  const bar = Math.random().toString(36).substring(2, 14).toUpperCase();
+  document.getElementById('ticketBarcode').textContent = bar.split('').join(' ');
+  document.getElementById('ticketBarcodeNum').textContent = bar;
+}
+
+function downloadTicket() {
+  showToast('info', '📄 Generating ticket...');
+  setTimeout(() => {
+    const w = window.open('', '_blank');
+    w.document.write(`
+      <html><head><title>CineVault — ${state.bookingId}</title>
+      <style>body{font-family:'Courier New',monospace;background:#0a0a0f;color:#f0eff5;padding:40px;}.ticket{border:2px dashed #252535;border-radius:12px;padding:28px;max-width:480px;margin:0 auto;background:#13131e;}h1{font-size:32px;letter-spacing:3px;color:#e8b04b;margin:8px 0;}.logo{font-size:24px;color:#e8b04b;font-weight:900;letter-spacing:3px;}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;}.field label{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#7a798a;display:block;}.field span{font-size:14px;font-weight:700;}.seats{color:#2dd4bf;}hr{border-color:#252535;border-style:dashed;margin:16px 0;}.total{font-size:22px;color:#e8b04b;font-weight:900;}.badge{background:rgba(74,222,128,0.15);color:#4ade80;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;}.barcode{text-align:center;letter-spacing:5px;color:#7a798a;font-size:12px;margin-top:16px;}</style></head>
+      <body><div class="ticket">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="logo">CINEVAULT</div><span class="badge">✓ CONFIRMED</span></div>
+        <h1>${state.selectedMovie?.name}</h1>
+        <div class="grid">
+          <div class="field"><label>Date</label><span>${state.selectedDate}</span></div>
+          <div class="field"><label>Time</label><span>${state.selectedTime}</span></div>
+          <div class="field"><label>Screen</label><span>Screen 3 — Dolby</span></div>
+          <div class="field"><label>Seats</label><span class="seats">${state.selectedSeats.join(', ')}</span></div>
+        </div>
+        <hr>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="field"><label>Total Paid</label><span class="total">₹${state.finalTotal}</span></div>
+          <div class="field"><label>Booking ID</label><span style="color:#e8b04b;font-size:16px;letter-spacing:2px;">${state.bookingId}</span></div>
+        </div>
+        <div class="barcode">${document.getElementById('ticketBarcode').textContent}</div>
+      </div>
+      <script>window.print();setTimeout(()=>window.close(),2000);<\/script></body></html>
+    `);
+    w.document.close();
+    showToast('success', '✅ Ticket ready!');
+  }, 800);
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function openModal(type) { document.getElementById('authModal').classList.add('open'); switchTab(type); }
+function closeModal() { document.getElementById('authModal').classList.remove('open'); }
+function closeModalOnOverlay(e) { if (e.target === document.getElementById('authModal')) closeModal(); }
+function switchTab(tab) {
+  document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+  document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+  document.getElementById('loginContent').classList.toggle('active', tab === 'login');
+  document.getElementById('registerContent').classList.toggle('active', tab === 'register');
+  document.getElementById('modalTitle').textContent = tab === 'login' ? 'Welcome Back' : 'Create Account';
+}
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) { showToast('error', '⚠️ Enter email and password'); return; }
+  state.user = { email, name: email.split('@')[0] };
+  closeModal();
+  showToast('success', `👋 Welcome back, ${state.user.name}!`);
+  updateNavForUser();
+}
+function handleRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  if (!name || !email || pass.length < 6) { showToast('error', '⚠️ Fill all fields (min 6 char password)'); return; }
+  state.user = { email, name };
+  closeModal();
+  showToast('success', `🎉 Welcome, ${name}!`);
+  updateNavForUser();
+}
+function updateNavForUser() {
+  if (state.user) {
+    document.getElementById('navRight').innerHTML = `
+      <span style="font-size:13px;color:var(--muted);">👤 ${state.user.name}</span>
+      <button class="btn-login" onclick="logout()">Logout</button>
+    `;
+  }
+}
+function logout() {
+  state.user = null;
+  document.getElementById('navRight').innerHTML = `
+    <button class="btn-login" onclick="openModal('login')">Login</button>
+    <button class="btn-register" onclick="openModal('register')">Register</button>
+  `;
+  showToast('info', '👋 Logged out');
+}
+
+// ============================================================
+// PROCESSING & TOAST
+// ============================================================
+function showProcessing(text) { document.getElementById('processingText').textContent = text || 'Processing...'; document.getElementById('processingOverlay').classList.add('active'); }
+function updateProcessing(text) { document.getElementById('processingText').textContent = text; }
+function hideProcessing() { document.getElementById('processingOverlay').classList.remove('active'); }
+
+function showToast(type, message) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  toast.innerHTML = `<span>${icons[type] || '•'}</span><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3200);
+}
+
+function toggleNav() { document.getElementById('navLinks').classList.toggle('open'); }
+
+// INIT
+renderMovies();
+</script>
+</body>
+</html>
